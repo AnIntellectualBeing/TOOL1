@@ -103,8 +103,8 @@ jobs:
           & engines/android/scrcpy.exe --version
           & engines/android/adb.exe kill-server
       - name: Smoke test - UxPlay announces itself over mDNS
-        # Informational: multicast on CI runners isn't guaranteed.
-        continue-on-error: true
+        # Proves UxPlay's built-in mDNS responder works on Windows without
+        # Bonjour: our own mDNS client must find "CI-PhoneMirror".
         shell: pwsh
         run: |
           cargo build -q -p mdns-probe

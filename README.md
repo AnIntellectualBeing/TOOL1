@@ -172,7 +172,7 @@ can show the camera (Android 12+) in a window. Making it a system webcam on
 Windows needs a virtual camera driver, which isn't done. On Linux, scrcpy's
 `--v4l2-sink` can do it.
 
-**Why is the installer fairly large?** It includes the GStreamer/FFmpeg
+**Why is the installer about 60 MB?** It includes the GStreamer/FFmpeg
 runtime the iPhone receiver needs, so you don't install anything else.
 
 **Mac and Linux?** The code is written to be portable (engine paths, window
