@@ -1,0 +1,7 @@
+node_modules/
+target/
+engines/*
+!engines/README.md
+src-tauri/gen/
+*.log
+/dist/

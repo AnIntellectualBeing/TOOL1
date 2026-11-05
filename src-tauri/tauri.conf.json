@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PhoneMirror",
+  "mainBinaryName": "PhoneMirror",
+  "version": "0.1.0",
+  "identifier": "io.github.phonemirror.desktop",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "PhoneMirror",
+        "width": 1000,
+        "height": 720,
+        "minWidth": 760,
+        "minHeight": 560,
+        "dragDropEnabled": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "PhoneMirror contributors",
+    "copyright": "GPL-3.0-or-later. Bundles scrcpy (Apache-2.0), UxPlay (GPL-3.0), GStreamer (LGPL-2.1+) and others; see THIRD_PARTY_LICENSES.md.",
+    "category": "Utility",
+    "shortDescription": "Show your phone's screen on your PC",
+    "longDescription": "Free, open-source phone mirroring: see, hear and control Android phones (scrcpy), and see and hear iPhones over AirPlay (UxPlay). No account, no watermark, no time limit, no telemetry.",
+    "licenseFile": "../LICENSE",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../engines/": "engines/",
+      "../THIRD_PARTY_LICENSES.md": "THIRD_PARTY_LICENSES.md"
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "nsis": {
+        "installMode": "perMachine",
+        "installerHooks": "./windows/hooks.nsh",
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}

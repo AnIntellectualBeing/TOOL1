@@ -1,0 +1,10 @@
+[package]
+name = "mdns-probe"
+description = "Lists DNS-SD services on the local network (debugging aid and CI check)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+mdns-sd = "0.21.7"

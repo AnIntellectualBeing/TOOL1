@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhoneMirror</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" aria-label="Main">
+    <div class="brand"><img src="icon.png" alt="" width="28" height="28"><span>PhoneMirror</span></div>
+    <button class="nav-item active" data-view="iphone"><span class="nav-ico" data-icon="apple"></span>iPhone &amp; iPad<span class="dot" id="dot-iphone"></span></button>
+    <button class="nav-item" data-view="android"><span class="nav-ico" data-icon="android"></span>Android<span class="dot" id="dot-android"></span></button>
+    <div class="spacer"></div>
+    <button class="nav-item" data-view="settings"><span class="nav-ico" data-icon="gear"></span>Settings</button>
+    <button class="nav-item" data-view="help"><span class="nav-ico" data-icon="help"></span>Help &amp; limits</button>
+    <p class="privacy">Free · No account · No telemetry<br>Everything stays on your network</p>
+  </nav>
+
+  <main>
+    <!-- ================= iPhone ================= -->
+    <section id="view-iphone" class="view active" aria-labelledby="h-iphone">
+      <header class="view-head">
+        <h1 id="h-iphone">iPhone &amp; iPad</h1>
+        <span class="pill" id="iphone-pill">Starting…</span>
+      </header>
+
+      <div class="card hero" id="iphone-hero">
+        <div class="hero-row">
+          <div class="radar" id="iphone-radar" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="hero-text">
+            <h2 id="iphone-title">Waiting for iPhone…</h2>
+            <p id="iphone-sub">On your iPhone, choose <strong class="rname">this PC</strong> under Screen Mirroring.</p>
+          </div>
+        </div>
+        <div id="iphone-pin" class="pin-box" hidden>
+          <p>Type this code on your iPhone:</p>
+          <div class="pin" id="iphone-pin-code">0000</div>
+        </div>
+        <div id="iphone-problem" hidden></div>
+        <div class="toolbar" id="iphone-toolbar" hidden></div>
+        <p class="hint" id="iphone-pending" hidden>A changed setting will apply the next time you start Screen Mirroring.</p>
+      </div>
+
+      <div class="card" id="firewall-card" hidden>
+        <h3>Windows Firewall</h3>
+        <div id="firewall-body"></div>
+      </div>
+
+      <div class="card">
+        <h3>Connect in 3 steps</h3>
+        <ol class="steps-pics">
+          <li><div class="pic" id="pic-cc"></div><p><b>1.</b> Connect the iPhone to the <b>same Wi-Fi</b> as this PC.</p></li>
+          <li><div class="pic" id="pic-cc2"></div><p><b>2.</b> Open <b>Control Center</b> (swipe down from the top-right corner) and tap <b>Screen Mirroring</b>.</p></li>
+          <li><div class="pic" id="pic-list"></div><p><b>3.</b> Pick <b class="rname">this PC</b>. The screen and sound appear here.</p></li>
+        </ol>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Use my PC as a speaker</h3>
+          <p>Play music or podcasts through your PC's speakers: in the Music app or Control Center, tap the AirPlay icon <span class="airplay-ico" aria-label="AirPlay"></span> and choose <b class="rname">this PC</b>.</p>
+          <label class="switch"><input type="checkbox" id="speaker-only"><span></span>Sound only — don't open a picture window</label>
+        </div>
+        <div class="card">
+          <h3>Cast videos from apps <span class="tag">Experimental</span></h3>
+          <p>With this on, the AirPlay button in apps like YouTube sends the video itself to your PC, so your iPhone stays free. Mirroring works either way.</p>
+          <label class="switch"><input type="checkbox" id="video-casting"><span></span>Allow video casting</label>
+        </div>
+      </div>
+
+      <p class="limit">An iPhone can't be controlled from the PC: Apple doesn't allow it. You can see and hear it.</p>
+    </section>
+
+    <!-- ================= Android ================= -->
+    <section id="view-android" class="view" aria-labelledby="h-android">
+      <header class="view-head">
+        <h1 id="h-android">Android</h1>
+        <span class="pill" id="android-pill">Not connected</span>
+        <span class="grow"></span>
+        <button class="btn primary" id="add-phone">Add a phone</button>
+      </header>
+
+      <div class="card hero" id="android-session" hidden>
+        <div class="hero-row">
+          <div class="phone-badge" aria-hidden="true"></div>
+          <div class="hero-text">
+            <h2 id="android-title">Mirroring</h2>
+            <p id="android-sub"></p>
+          </div>
+          <span class="grow"></span>
+          <button class="btn danger" id="android-stop">Stop</button>
+        </div>
+        <div id="android-problem" hidden></div>
+        <div id="android-warnings"></div>
+        <div class="toolbar" id="android-toolbar"></div>
+        <div class="extras">
+          <label class="switch"><input type="checkbox" id="opt-screen-off"><span></span>Keep the phone's screen off (saves battery)</label>
+          <label class="switch"><input type="checkbox" id="opt-clipboard"><span></span>Share clipboard both ways</label>
+          <label class="field-inline">Show
+            <select id="opt-source">
+              <option value="screen">Phone screen</option>
+              <option value="back">Back camera</option>
+              <option value="front">Front camera</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">Use your mouse and keyboard in the phone window. Drop files on PhoneMirror to send them to the phone's <b>Download</b> folder; drop an <b>.apk</b> to install it. Copy on one side, paste on the other.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Your phones</h3><button class="btn ghost small" id="android-refresh">Refresh</button></div>
+        <div id="device-list" class="device-list"></div>
+        <div id="device-empty" class="empty">
+          <p><b>No phones yet.</b> Press <b>Add a phone</b> to connect over Wi-Fi, or plug a phone in with a USB cable.</p>
+        </div>
+        <div id="android-error" hidden></div>
+      </div>
+
+      <div class="card subtle">
+        <h3>Good to know</h3>
+        <ul class="bullets">
+          <li>Sound from the phone needs <b>Android 11 or newer</b>.</li>
+          <li>Using the phone's camera needs <b>Android 12 or newer</b>. It opens in a PhoneMirror window; making it show up as a webcam in Zoom or Teams on Windows <b>isn't done yet</b>.</li>
+          <li>Apps like Netflix and some banking apps show a black screen. That's the app's choice to protect its content.</li>
+          <li>Wireless debugging turns itself off when the phone restarts or changes Wi-Fi. If a phone won't connect, turn it on again.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= Settings ================= -->
+    <section id="view-settings" class="view" aria-labelledby="h-settings">
+      <header class="view-head"><h1 id="h-settings">Settings</h1></header>
+
+      <div class="card form">
+        <h3>iPhone &amp; iPad</h3>
+        <label class="field">Name shown on the iPhone
+          <input type="text" id="s-receiver-name" maxlength="50" placeholder="">
+        </label>
+        <label class="switch"><input type="checkbox" id="s-start-receiver"><span></span>Be ready for iPhones whenever PhoneMirror is open</label>
+        <label class="field">Picture quality
+          <select id="s-iphone-quality" class="quality-select"></select>
+        </label>
+        <label class="field">Video output
+          <select id="s-video-output">
+            <option value="auto">Automatic (Direct3D 11, recommended)</option>
+            <option value="d3d12">Direct3D 12 (newer graphics cards)</option>
+            <option value="compatible">Compatible (slower; try this if the picture is black or glitchy)</option>
+          </select>
+        </label>
+        <label class="switch"><input type="checkbox" id="s-require-pin"><span></span>Ask for a code before an iPhone can connect</label>
+      </div>
+
+      <div class="card form">
+        <h3>Android</h3>
+        <label class="field">Picture quality
+          <select id="s-android-quality" class="quality-select"></select>
+        </label>
+        <label class="switch"><input type="checkbox" id="s-android-audio"><span></span>Play the phone's sound on the PC (Android 11+)</label>
+        <label class="switch"><input type="checkbox" id="s-stay-awake"><span></span>Keep the phone awake while plugged in</label>
+        <label class="switch"><input type="checkbox" id="s-auto-reconnect"><span></span>Reconnect automatically if the connection drops</label>
+      </div>
+
+      <div class="card form">
+        <h3>Files</h3>
+        <label class="field">Screenshots folder
+          <span class="row"><input type="text" id="s-shots" placeholder=""><button class="btn ghost small" data-open="s-shots">Open</button></span>
+        </label>
+        <label class="field">Recordings folder
+          <span class="row"><input type="text" id="s-recs" placeholder=""><button class="btn ghost small" data-open="s-recs">Open</button></span>
+        </label>
+      </div>
+
+      <div class="card form" id="settings-firewall">
+        <h3>Network &amp; firewall</h3>
+        <div id="settings-firewall-body"><p class="muted">Checking…</p></div>
+      </div>
+
+      <div class="card form">
+        <h3>Diagnostics</h3>
+        <p>If something doesn't work, this copies technical details (no personal files) so you can paste them into a bug report.</p>
+        <div class="row"><button class="btn" id="copy-diagnostics">Copy diagnostics</button><button class="btn ghost" id="restart-receiver">Restart iPhone receiver</button></div>
+      </div>
+    </section>
+
+    <!-- ================= Help ================= -->
+    <section id="view-help" class="view" aria-labelledby="h-help">
+      <header class="view-head"><h1 id="h-help">Help &amp; limits</h1></header>
+      <div class="card">
+        <h3>Honest limits</h3>
+        <ul class="bullets">
+          <li><b>iPhone can't be controlled from the PC.</b> Apple doesn't allow it. You can see and hear it.</li>
+          <li><b>Phone and PC must be on the same Wi-Fi.</b> Some public, hotel, school or office Wi-Fi blocks devices from seeing each other. Your phone's hotspot works: connect the PC to it.</li>
+          <li><b>Protected apps show a black screen</b> (Netflix, some banking apps). That's the app's choice.</li>
+          <li><b>Android sound needs Android 11+.</b> Wireless pairing also needs Android 11+; older phones work with a USB cable.</li>
+          <li><b>The installer isn't code-signed yet</b>, so Windows SmartScreen may warn. Choose “More info” → “Run anyway”.</li>
+          <li>The phone's picture opens in its own window for now.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Something's not working?</h3>
+        <details><summary>My iPhone doesn't see the PC</summary>
+          <p>Check both are on the same Wi-Fi (not a guest network). In Settings → Network &amp; firewall, press <b>Fix firewall</b>. If Windows calls your Wi-Fi “Public”, either set it to Private in Windows Settings or press <b>Allow on this network</b>. Turning the iPhone's Wi-Fi off and on also helps.</p></details>
+        <details><summary>The Android QR code doesn't work</summary>
+          <p>Make sure you tapped <b>Pair device with QR code</b> (inside Wireless debugging), not the camera app. Phone and PC must be on the same Wi-Fi. If it still fails, use <b>Pair with a code instead</b>, or a USB cable.</p></details>
+        <details><summary>“Your phone and PC are on different Wi-Fi networks”</summary>
+          <p>Many routers have a separate 5 GHz, 2.4 GHz or guest network. Put both devices on the same one. Mesh systems and office networks sometimes separate devices; a phone hotspot is the quick fix.</p></details>
+        <details><summary>I can see the Android screen but can't click</summary>
+          <p>Xiaomi/Redmi/POCO: turn on <b>USB debugging (Security settings)</b> in Developer options and restart the phone. OPPO/Realme: turn on <b>Disable permission monitoring</b>.</p></details>
+        <details><summary>No sound from Android</summary>
+          <p>Sound needs Android 11 or newer. On Android 11, unlock the phone before connecting.</p></details>
+        <details><summary>The picture is black or stutters</summary>
+          <p>Try a lower quality preset. For iPhone, try Settings → Video output → Compatible. For protected apps a black picture is expected.</p></details>
+      </div>
+      <div class="card">
+        <h3>Privacy</h3>
+        <p>PhoneMirror has no account, no ads, no telemetry and no analytics. It never connects to the internet: the picture and sound go straight from your phone to your PC over your local network.</p>
+      </div>
+      <div class="card">
+        <h3>Credits</h3>
+        <p>PhoneMirror is free software (GPL-3.0). It stands on the shoulders of
+          <a href="https://github.com/Genymobile/scrcpy" data-link>scrcpy</a> (Android, Apache-2.0),
+          <a href="https://github.com/FDH2/UxPlay" data-link>UxPlay</a> (AirPlay, GPL-3.0),
+          <a href="https://gstreamer.freedesktop.org/" data-link>GStreamer</a> and
+          <a href="https://ffmpeg.org/" data-link>FFmpeg</a> (LGPL/GPL), and Android's adb (Apache-2.0).
+          Full list in THIRD_PARTY_LICENSES.md, installed next to the app.</p>
+        <p class="muted" id="version"></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= Add-a-phone wizard ================= -->
+<dialog id="wizard" aria-labelledby="wiz-title">
+  <form method="dialog" class="wiz">
+    <header class="wiz-head">
+      <h2 id="wiz-title">Add an Android phone</h2>
+      <ol class="wiz-progress" id="wiz-progress"><li>Brand</li><li>Developer options</li><li>Wireless debugging</li><li>Scan</li></ol>
+      <button class="icon-btn" value="cancel" aria-label="Close">✕</button>
+    </header>
+    <div class="wiz-body" id="wiz-body"></div>
+    <footer class="wiz-foot">
+      <button type="button" class="btn ghost" id="wiz-back">Back</button>
+      <span class="grow"></span>
+      <button type="button" class="btn link" id="wiz-usb">Use a USB cable instead</button>
+      <button type="button" class="btn primary" id="wiz-next">Next</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="drop-overlay" hidden><div>Drop to send to your phone<br><small>APKs are installed · other files go to Download</small></div></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="demo.js"></script>
+<script src="pictures.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Tests (pairing, discovery, engines)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Unit tests (mock adb + mock mDNS)
+        run: cargo test -p phonemirror-core
+      - name: Clippy
+        run: cargo clippy -p phonemirror-core -p mdns-probe --all-targets -- -D warnings
+      - name: UI scripts parse
+        run: for f in ui/*.js; do node --check "$f"; done
+
+  uxplay-windows:
+    name: UxPlay + GStreamer (Windows)
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          cache: true
+          install: >-
+            git
+            binutils
+          pacboy: >-
+            gcc:p cmake:p ninja:p pkgconf:p libplist:p openssl:p
+            gstreamer:p gst-plugins-base:p gst-plugins-good:p gst-plugins-bad:p gst-libav:p
+            glib-networking:p
+      - name: Build UxPlay and bundle its runtime
+        run: scripts/build-uxplay-windows.sh
+      - name: Check the bundle works with nothing else installed
+        shell: pwsh
+        run: ./scripts/check-uxplay-bundle.ps1 engines/iphone
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uxplay-windows
+          path: engines/iphone
+          if-no-files-found: error
+
+  installer:
+    name: Windows installer
+    needs: [test, uxplay-windows]
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          want="${GITHUB_REF_NAME#v}"
+          have=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          if [ "$want" != "$have" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME but tauri.conf.json says $have"; exit 1
+          fi
+      - name: Fetch scrcpy + adb (checksum-verified)
+        shell: bash
+        run: scripts/fetch-android-engine.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: uxplay-windows
+          path: engines/iphone
+      - name: Smoke test - bundled adb and scrcpy start
+        shell: pwsh
+        run: |
+          & engines/android/adb.exe version
+          & engines/android/scrcpy.exe --version
+          & engines/android/adb.exe kill-server
+      - name: Smoke test - UxPlay announces itself over mDNS
+        # Informational: multicast on CI runners isn't guaranteed.
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          cargo build -q -p mdns-probe
+          $env:PATH = "$PWD\engines\iphone;$env:SystemRoot\System32"
+          $env:GST_PLUGIN_SYSTEM_PATH_1_0 = "$PWD\engines\iphone\lib\gstreamer-1.0"
+          $p = Start-Process -FilePath engines\iphone\uxplay.exe -ArgumentList '-n','CI-PhoneMirror','-nh','-p','7100','-vs','0','-as','0' -PassThru -NoNewWindow -RedirectStandardOutput uxplay-ci.log
+          Start-Sleep -Seconds 3
+          & target\debug\mdns-probe.exe _airplay._tcp.local. CI-PhoneMirror 20
+          $code = $LASTEXITCODE
+          Stop-Process -Id $p.Id -Force
+          Get-Content uxplay-ci.log
+          exit $code
+      - name: Build installer
+        run: npx tauri build --bundles nsis
+      - name: Checksums
+        shell: bash
+        run: |
+          cd target/release/bundle/nsis
+          ls -la
+          sha256sum *.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhoneMirror-windows-installer
+          path: |
+            target/release/bundle/nsis/*.exe
+            target/release/bundle/nsis/SHA256SUMS.txt
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [installer]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: PhoneMirror-windows-installer
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: uxplay-windows
+          path: uxplay
+      - name: Collect sources of bundled (L)GPL components
+        # GPL/LGPL require offering the source of what we ship; we attach it.
+        run: |
+          set -euo pipefail
+          mkdir -p sources
+          tail -n +2 uxplay/THIRD_PARTY_MANIFEST.tsv | cut -f5 | grep '^https://repo.msys2.org/' | sort -u > sources/urls.txt
+          while read -r url; do
+            curl -fsSL --retry 3 -o "sources/$(basename "$url")" "$url" || echo "WARN: could not fetch $url" | tee -a sources/MISSING.txt
+          done < sources/urls.txt
+          source scripts/engines.env
+          git clone -q "$UXPLAY_REPO" sources/UxPlay && git -C sources/UxPlay checkout -q "$UXPLAY_COMMIT"
+          cp -r scripts/patches sources/UxPlay-phonemirror-patches
+          rm -rf sources/UxPlay/.git
+          cp uxplay/THIRD_PARTY_MANIFEST.tsv sources/
+          (cd sources && zip -qr "../dist/PhoneMirror-${GITHUB_REF_NAME}-third-party-sources.zip" .)
+          ls -la dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PhoneMirror ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          body: |
+            **Download:** `PhoneMirror_*_x64-setup.exe` below (Windows 10/11, 64-bit).
+
+            The installer isn't code-signed yet, so Windows SmartScreen may say it "protected your PC". Click **More info → Run anyway**. Check the file against `SHA256SUMS.txt` if you like.
+
+            Source code of the bundled third-party components (GStreamer, FFmpeg, UxPlay, ...) is in the `third-party-sources` zip, as their licences require.
+          files: |
+            dist/*.exe
+            dist/SHA256SUMS.txt
+            dist/*-third-party-sources.zip

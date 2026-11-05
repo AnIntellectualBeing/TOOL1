@@ -1,0 +1,18 @@
+# PhoneMirror patch to UxPlay (GPL-3.0): make stdout/stderr unbuffered so
+# PhoneMirror can follow the log through a pipe in real time.
+
+diff --git a/uxplay.cpp b/uxplay.cpp
+index 5ad4e39..69fac75 100644
+--- a/uxplay.cpp
++++ b/uxplay.cpp
+@@ -3378,6 +3378,10 @@ void real_main (int argc, char *argv[]) {
+ #else
+ int main (int argc, char *argv[]) {
+ #endif
++    /* PhoneMirror: unbuffered output, so the app sees log lines as they happen
++       when stdout is a pipe (Windows has no line-buffered mode for pipes). */
++    setvbuf(stdout, NULL, _IONBF, 0);
++    setvbuf(stderr, NULL, _IONBF, 0);
+     std::vector<char> server_hw_addr;
+     std::string config_file = "";
+ 
