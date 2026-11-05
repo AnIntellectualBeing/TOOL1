@@ -19,15 +19,17 @@ $failed = @()
 $elements = @(
   "appsrc", "queue", "decodebin", "playbin", "h264parse", "h265parse", "aacparse",
   "avdec_h264", "avdec_aac", "avdec_alac", "videoconvert", "videoscale", "videoflip",
-  "audioconvert", "audioresample", "volume", "d3d11videosink", "d3d11h264dec",
+  "audioconvert", "audioresample", "volume", "d3d11videosink",
   "wasapisink", "autoaudiosink", "autovideosink", "mp4mux", "filesink", "fakesink"
 )
 foreach ($e in $elements) {
   & "$root\gst-inspect-1.0.exe" --exists $e
   if ($LASTEXITCODE -ne 0) { $failed += $e; Write-Host "MISSING element: $e" } else { Write-Host "ok: $e" }
 }
-# Optional (HLS casting / D3D12) - report only.
-foreach ($e in @("d3d12videosink", "hlsdemux2", "hlsdemux", "souphttpsrc")) {
+# Optional - report only. GPU decoders (d3d11h264dec/d3d12h264dec) are only
+# registered when a GPU with video decoding exists, which CI runners lack;
+# without them decodebin falls back to avdec_h264 (checked above).
+foreach ($e in @("d3d11h264dec", "d3d12h264dec", "d3d12videosink", "hlsdemux2", "hlsdemux", "souphttpsrc")) {
   & "$root\gst-inspect-1.0.exe" --exists $e
   Write-Host ("optional {0}: {1}" -f $e, $(if ($LASTEXITCODE -eq 0) { "present" } else { "absent" }))
 }

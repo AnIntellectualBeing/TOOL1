@@ -58,7 +58,7 @@ from the AOSP sources above and dropped into `engines\android\`.
 | UxPlay's included code | GPL-3.0 / LGPL-2.1+ / MIT | shairplay & RPiPlay heritage (LGPL-2.1+/GPL-3.0), llhttp (MIT), playfair (GPL-3.0). See UxPlay's README. |
 | GStreamer core, gst-plugins-base, -good, -bad | LGPL-2.1-or-later (a few plugins MIT/BSD) | https://gstreamer.freedesktop.org/ — only the plugins UxPlay uses are bundled (list in `scripts/build-uxplay-windows.sh`). |
 | gst-libav | LGPL-2.1-or-later | Wraps FFmpeg for AAC/ALAC/H.264 decoding. |
-| FFmpeg (MSYS2 build) and its codec libraries | LGPL-2.1+/GPL-2.0+/GPL-3.0 depending on MSYS2's build flags (printed in the CI log), plus BSD/MIT codec libraries | The build script fails if FFmpeg was configured with `--enable-nonfree`. Any GPL parts are compatible because PhoneMirror is GPL-3.0. |
+| FFmpeg (MSYS2 build) and the codec libraries it links (x264, x265, dav1d, libvpx, opus, ...) | **GPL-3.0-or-later** as built by MSYS2 (`--enable-gpl --enable-version3`, verified in CI; no `--enable-nonfree`); the codec libraries are GPL-2.0+ or BSD/MIT | The build script fails if FFmpeg was configured with `--enable-nonfree`. GPL-3.0 is compatible because PhoneMirror is GPL-3.0. |
 | GLib, libsoup, glib-networking, GnuTLS, libplist | LGPL-2.1-or-later | |
 | nettle / GMP | LGPL-3.0-or-later or GPL-2.0-or-later (dual) | |
 | OpenSSL 3 | Apache-2.0 | |
