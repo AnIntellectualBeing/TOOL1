@@ -397,9 +397,8 @@ pub async fn action(
         "topmost" => {
             let pid = pid(&st)?;
             st.iphone.lock().unwrap().status.topmost = on;
-            if !win::set_topmost(pid, on) && on && cfg!(windows) {
-                // Applied when the window appears.
-            }
+            // If the picture window isn't open yet, this is applied when it appears.
+            win::set_topmost(pid, on);
         }
         "mute" => {
             let pid = pid(&st)?;

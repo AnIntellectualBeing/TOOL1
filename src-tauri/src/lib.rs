@@ -129,9 +129,10 @@ fn android_status(st: tauri::State<'_, State>) -> android::AndroidStatus {
     android::status(&st)
 }
 
+// async so it runs on the Tokio runtime (it spawns the pairing task).
 #[tauri::command]
-fn android_start_pairing(st: tauri::State<'_, State>) -> android::PairingStart {
-    android::start_qr_pairing(&st)
+async fn android_start_pairing(st: tauri::State<'_, State>) -> Res<android::PairingStart> {
+    Ok(android::start_qr_pairing(&st))
 }
 
 #[tauri::command]
@@ -250,7 +251,9 @@ pub fn run() {
             let st = Shared::new(app.handle().clone());
             app.manage(st.clone());
             if st.settings().start_iphone_receiver {
-                iphone::start(&st);
+                // Engines are supervised by Tokio tasks; start inside the runtime.
+                let st = st.clone();
+                tauri::async_runtime::spawn(async move { iphone::start(&st) });
             } else {
                 st.iphone.lock().unwrap().status.state = "off";
             }
