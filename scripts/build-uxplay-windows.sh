@@ -27,13 +27,15 @@ if [[ ! -d "$SRC/.git" ]]; then
   git init -q "$SRC"
   git -C "$SRC" remote add origin "$UXPLAY_REPO"
 fi
+# Never convert line endings: the patches must match upstream byte for byte.
+git -C "$SRC" config core.autocrlf false
 git -C "$SRC" fetch -q --depth 1 origin "$UXPLAY_COMMIT"
 git -C "$SRC" checkout -q --force FETCH_HEAD
 echo "UxPlay at $(git -C "$SRC" rev-parse HEAD)"
 # PhoneMirror's small patches (documented in THIRD_PARTY_LICENSES.md).
 for patch in "$PWD"/scripts/patches/*.patch; do
   echo "Applying $(basename "$patch")"
-  git -C "$SRC" apply "$patch"
+  git -C "$SRC" apply --ignore-whitespace "$patch"
 done
 
 cmake -S "$SRC" -B "$SRC/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DNO_MARCH_NATIVE=ON
